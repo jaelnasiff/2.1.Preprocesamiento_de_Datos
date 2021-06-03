@@ -73,6 +73,7 @@ máximo = valor medio + 3 x SD
 
 Es decir, el umbral mínimo es el valor tres sigmas por debajo del valor medio y el umbral máximo el valor tres sigmas por encima del valor medio.
 
+
 •	El criterio del rango intercuartílico elige los umbrales mínimo y máximo de esta otra:
 
 mínimo = Q1 - 1.5 x IQR
@@ -82,4 +83,94 @@ máximo = Q3 + 1.5 x IQR
 Q1 es el primer cuartil, Q3 es el tercer cuartil e IQR es Q3 - Q1, el rango intercuartílico. 
 
 La mayoría de estos criterios tienen su mejor desempeño cuando la distribución subyacente es normal. Ya vimos que si la distribución subyacente es una ley de potencias, estos criterios están destinados a fracasar.
+
+***ENCODERS***
+
+
+Como hemos visto, los pasos fundamentales que todo/a Data Scientist debe saber hacer a la hora de llevar a cabo un preprocesamiento son:
+1.	Trabajar con valores faltantes
+2.	Identificar valores atípicos o outliers
+3.	Escalado de datos/normalización
+4.	Transformar los atributos categóricos en información más comprensible.
+5.	Seleccionar atributos relevantes/reducción de dimensionalidad.
+6.	Incorporar nuevos atributos.
+
+**Escalado de Datos**
+
+En lo datasets solemos tener distintas variables, medidas en diferentes unidades y con distintas escalas. Por ejemplo, la altura de las personas adultas, medidas en metros, suele estar en el rango de las unidades —en general, menos que 2.5 metros—, mientras que su peso —medido en kilogramos— en el rango de las decenas o centenas. Si bien esto facilita su comprensión para los humanos, algunos modelos de Machine Learning pueden confundirse, ya que no saben de unidades, así que de alguna forma debemos asegurarnos que nuestros modelos no se confundan. De esto se ocupa el escalado de datos.
+
+Hay tres formas muy usadas de escalado de datos:
+1.	*Escalado Mínimo-Máximo:* en general se usa cuando sabemos que nuestra variable puede tomar valores entre un mínimo y un máximo bien definidos. Por ejemplo, las notas de un examen de 0 a 10. En esos casos, en general se suele hacer un escalado lineal de forma tal de hacer la siguiente asignación:
+
+Valor máximo → 1
+
+Valor mínimo → 0
+
+Al resto de los valores se les asigna un valor intermedio. Para el caso del examen con notas del 0 al 10, podría quedar así:
+
+10 → 1
+
+9 → 0.9
+
+…
+
+1 → 0.1
+
+0 → 0
+
+En este caso, consiste simplemente en dividir por 10 el valor original. Si bien no lo pusimos, aplica para todos los valores intermedios, no solamente de uno en uno. Por último, a veces en lugar de 0 se utiliza -1 para el valor mínimo.
+
+2.	*Estandarización de datos o escalado por Z-Score:* también conocido como normalización —aunque en algunos ámbitos utilizan ese término para otro tipo de escalado— es probablemente la forma más utilizada. En la introducción mencionamos que una diferencia de un metro en la altura de una persona adulta es mucho más que una diferencia de un 1 kg. ¿Cómo podemos hacer para poner esto en evidencia? Prestar atención a lo siguiente: 1 kg no nos parece mucho porque la desviación estándar de los pesos de la población es mucho más grande que 1 kg. En cambio, la desviación estándar de alturas es menor a 1 metro, lo cual hace que ese número sí nos parezca mucho. Entonces, la desviación estándar suele ser una escala intuitiva para ciertas variables, si bien es raro pensarlo de esta forma de una manera consciente.
+
+Uua opción es hacer un escalado en función de la desviación estándar. Pero para hacerlo bien, debemos usar un punto de referencia. En general, se utiliza el valor medio, obteniendo de esta forma el Z-Score. Si tenemos una muestra de números x1, x2, x3,... xn, y su media es μ y su desviación estándar σ, el Z-Score de cada número es:
+
+![image](https://user-images.githubusercontent.com/80594428/120716551-96dde980-c49c-11eb-8e4c-7e4b1e7750b5.png)
+ 
+Lo que hace el Z-Score es contar la distancia al valor medio para cada valor de la muestra en “unidades” de desviación estándar. Notar que xi - es la distancia de la instancia xi al valor medio, y cuando dividimos por σ lo que hacemos es contar cuántas desviaciones estándar entran en esa distancia.
+
+Cuando la distribución subyacente es gaussiana, podemos convertir Z-Score a percentiles con la siguiente tabla:
+
+![image](https://user-images.githubusercontent.com/80594428/120716588-a1987e80-c49c-11eb-8b45-0d0036085a15.png)
+ 
+Entonces, si escalamos por Z-Score - o estandarizamos - ya no importa en qué unidades está medida una variable. Si las alturas estaban medidas en centímetros o metros, luego del escalado ambas tendrán la misma distribución. Además, nos permite comparar variables de distinto tipo. Por ejemplo, cuando alguien tiene un Z-Score de 1 en su peso, es más pesado que el 84% de la población. Si, además tiene un Z-Score de 1.5 en su altura, se trata de una persona bastante alta, ¡más que el 93% de la población!
+
+Es muy común estandarizar las variables numéricas de nuestro dataset, ya que no cambia la forma de la distribución. De esta forma, alimentamos a nuestros modelos de variables comparables. Sin embargo, la mayor ganancia está en estandarizar distribuciones gaussianas o muy cercanas a gaussianas. En cambio, si una variable sigue una distribución de potencias, hay mejores herramientas para usar.
+
+1.	Escalados no-lineales: muchos modelos andan mejor cuando los atributos siguen distribuciones normales. Pero este muchas veces no es el caso. A veces las distribuciones no son simétricas, sino que tienen una cola, o, peor aún, siguen una ley de potencias. En esos casos, una transformación lineal como el Z-Score no servirá de mucho. Hay dos transformaciones que suelen ser útiles:
+         1.	En el caso de una distribución que siga una ley de potencias, tomar el logaritmo de los valores transforma la distribución en algo muy parecido a una normal.
+         2.	Si tomar logaritmo es muy drástico, ya sea porque la distribución tiene una cola pero no llega a ser una ley de potencias, tomar la raíz cuadrada suele ser un método             efectivo.
+A veces decidir por una u otra es una cuestión de prueba y error. Como siempre, dependerá del problema bajo estudio y del modelo elegido.
+
+**Atributos Categóricos**
+
+Recuerda: las variables que contienen etiquetas, como el género o color de pelo de una persona, tipos de propiedades, etc. son ejemplos de variables cualitativas o categóricas. En general, este tipo de atributos pueden tomar valores de un conjunto limitado, y en general fijo, de posibles valores.
+
+Para que los modelos puedan utilizar este tipo de datos es necesario pasarlos a números . Por ejemplo, si tu dataset tiene propiedades del tipo Departamento, PH y Casa, podríamos utilizar la siguiente asignación:
+
+Departamento → 0
+
+PH → 1
+
+Casa → 2
+
+Si bien esto puede parecer una buena idea, ¡ tiene un problema! Ahora el modelo cree que ‘Casa’ es más grande que ‘PH’ y éste, a su vez, que ‘Departamento’. Es más, una casa es el doble que un PH. Este tipo de asignación puede confundir a los modelos, en particular si se trata de un problema de Regresión.
+
+¿Se podrá hacer mejor? La respuesta es que SÍ. Para hacerlo, es importante identificar los dos tipos de variables categóricas distintos que existen:
+1.	Ordinales: existe una relación de orden. Por ejemplo, el tamaño de una prenda de ropa: XS, S, M, L, XL son etiquetas categóricas que tienen una relación de orden, ya que XL es mayor que L y así. Sin embargo, la distancia entre cada etiqueta no es necesariamente la misma. Otra forma de pensarlo es que no se pueden sumar, ya que no existen relaciones como S + S = M.
+2.	Nominales : no existe una relación de orden. Por ejemplo, tipo de propiedad, color de pelo u ojos, etc.
+
+![image](https://user-images.githubusercontent.com/80594428/120716623-ae1cd700-c49c-11eb-96e4-14d26b9a6986.png)
+ 
+Reconocer con qué tipo de variable estamos trabajando te ayudará a operar correctamente con ella. En el caso de las variables categóricas ordinales, tiene sentido una asignación del tipo que hicimos para las propiedades, teniendo cuidado de mantener una distancia “realista” entre cada etiqueta y no asumir que, porque ahora se trata de números, hay que sumarlos entre sí. Este tipo de tratamiento se lo conoce como Label Encoding .
+
+Para las variables categóricas nominales, el tratamiento es un poco más complejo. Supongamos que tenemos una columna con colores, Rojo, Amarillo y Verde. Para codificar esta información de una manera interpretable para los modelos, debemos crear una columna por cada posible valor. Luego, ponemos un 1 en la columna del color correspondiente para cada instancia, y cero en las otras, obteniendo algo de esta forma:
+ 
+ ![image](https://user-images.githubusercontent.com/80594428/120716645-b83ed580-c49c-11eb-9a43-9d98566cdd2a.png)
+
+A este procedimiento se lo conoce como **One-Hot Encoding** . El término One-Hot viene de la electrónica, y representa un grupo de bits (cada bit solo puede tomar dos valores, 0 ó 1) entre los cuales las combinaciones legales de valores son solo aquellas con un solo bit alto (1) y todas los demás bajas (0). Por ejemplo, si tenemos tres bits, las combinaciones one-hot son 001, 010, 100. Presta atención a la figura y verás que efectivamente son esas combinaciones las que se utilizan para codificar los tres colores, Rojo, Amarillo y Verde. En algunos ámbitos se conocen como variables dummy a aquellas que solo pueden tomar dos valores, 0 y 1. Usando esa terminología, lo que hace el One-Hot Encoding es crear una variable dummy por cada posible valor de la variable categórica.
+
+⚠️ La desventaja del One-Hot Encoding es que, si tienes muchos atributos categóricos, y cada uno de ellos tiene muchos posibles valores, el dataset luego de hacer en One-Hot Encoding se agranda mucho, a veces a niveles poco manejables. Otro detalle a tener en cuenta es que si tienes n posibles valores, en realidad bastan n - 1 columnas, ya que la última se puede obtener a partir de las anteriores: observa que la columna Verde de la figura tiene un 1 en los lugares donde las columnas Rojo y Amarillo tienen un 0, mientras que tiene 0 donde hay un 1 en alguna de las otras columnas. No es preciso entrar en detalles, pero esto puede ser un problema en algunos modelos, ¡en particular los que involucran operaciones matriciales!
+
+
+
 
